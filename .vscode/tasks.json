@@ -1,0 +1,12 @@
+{
+    "version": "0.1.0",
+    "command": "C:\\Program Files\\Anaconda3\\python",
+    "args": ["LineRecognition.py"],
+    "problemMatcher": {
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+            "regexp": "^(.*)+s$",
+            "message": 1
+        }
+    }
+}

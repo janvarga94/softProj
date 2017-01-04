@@ -4,8 +4,7 @@ from skimage.io import imread
 from scipy import ndimage
 import cv2
 import random
-
-
+import pytesseract
 
 def find_line(img):
     img = np.logical_and(img[:, :, 1] < 10, img[:, :,0] >100)
@@ -19,11 +18,15 @@ def find_line(img):
                 secondIndex = (indy,indx)
     return (firstIndex,secondIndex)
 
+def find_numbers(img):
+    pass
+
 def processImage(img):
     plt.imshow(img)
     plt.draw()
     plt.show()
     line = find_line(image)
+    numbers = find_numbers(image)
 
 if __name__ == "__main__":
     plt.show(block=False)

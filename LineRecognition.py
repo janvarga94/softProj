@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.io import imread
 from skimage.measure import label, regionprops
+from skimage.morphology import erosion,disk,opening
 from scipy import ndimage
 import cv2
 import random
@@ -15,23 +16,41 @@ import math
 
 model = load_model('trainedModel100-70-30-10')
 
+class Pozicija:
+    def __init__(self,row1,col1,row2,col2):
+        self.row1 = row1
+        self.row2 = row2
+        self.col1 = col1
+        self.col2 = col2
+
+class Tacka:
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+
 def find_line(img):
+    """
+    :return: pozicija linije, tako da prva pozicija je tacka levo, a druga tacka desno
+    """
     img = np.logical_and(img[:, :, 1] < 10, img[:, :,0] >100)
-    firstIndex = None
-    secondIndex = None
-    for indx,row in enumerate(img):
-        for indy,y in enumerate(row):
+    tacka1 = None
+    tacka2 = None
+    for indrow,row in enumerate(img):
+        for indcol,y in enumerate(row):
             if y:
-                if firstIndex is None:
-                    firstIndex = (indy,indx)
-                secondIndex = (indy,indx)
-    return firstIndex, secondIndex
+                if tacka1 is None:
+                    tacka1 = Tacka(indrow,indcol)
+                tacka2 = Tacka(indrow,indcol)
+    if(tacka1.col < tacka2.col):
+        return Pozicija(tacka1.row, tacka1.col, tacka2.row, tacka2.col)
+    else:
+        return Pozicija(tacka2.row, tacka2.col, tacka1.row, tacka1.col)
 
 def find_numbers(img):
 
     imageJustNum = np.logical_and(image[:, :, 0] > 0, image[:, :, 2] > 0)
     imageGray = rgb2gray(image)
-    erozed = erozija(imageGray)
+    erozed = brisanjeZvezdica(imageGray)
 
     labeled_img = label(erozed)
     regions = regionprops(labeled_img)
@@ -52,27 +71,19 @@ def find_numbers(img):
         broj.append(int(TR1))
         broj.append(int(TR2))
 
-        broj.append(int(slika.bbox[0]))
-        broj.append(int(slika.bbox[1]))
-        broj.append(int(slika.bbox[2]))
-        broj.append(int(slika.bbox[3]))
-
         brojevi.append(broj)
 
-
-    print("brojevi len: {0}".format(len(brojevi)))
+    rezultat = [[] for x in range(10)]
 
     for broj in brojevi:
-        img_crop = imageGray[broj[0]: broj[2], broj[1]: broj[3]]
+        img_crop = erozed[broj[0]: broj[2], broj[1]: broj[3]]
         t = model.predict(img_crop.reshape(1, 784), verbose=1)
         rez = np.argmax(t)
         if t[0,rez] > 0:
             print("na slici je: {0}".format(rez))
-        plt.imshow(img_crop, 'gray')
-        plt.show()
+            rezultat[rez].append(Pozicija(broj[0],broj[1],broj[2],broj[3]))
 
-
-    return 0
+    return rezultat
 
 
 
@@ -93,20 +104,14 @@ def startDeleteion(img):
             pass
 
 
-def listContains(list, position):
-    for (row,col) in list:
-        if math.sqrt( (row - position[0])**2 + (col - position[1])**2 ) < 28:
-            return True
-    return False
-
-def indexToRowAndCol(img, index):
-    return index / (img.shape[1] - 28), index % (img.shape[1] - 28)
-
 def processImage(img):
-    # line = find_line(image)
-    numbers = find_numbers(image)
-    #plt.imshow(img)
-    #plt.show()
+
+    plt.imshow(img,'gray');
+    plt.show()
+    line = find_line(img)
+
+    numbers = find_numbers(img)
+    pass
 
 
 def erozija(img):
@@ -122,10 +127,29 @@ def erozija(img):
                 newOne[row,col] = 1
     return newOne
 
+def brisanjeZvezdica(img):
+    imageGray = rgb2gray(image)
+    mask = imageGray[:,:] > 0.5
+    zeroOne = np.zeros((img.shape[0], img.shape[1]))
+    zeroOne[mask] = 1
+  #  selem = disk(1)
+  #  eroded = opening(zeroOne, selem)
+    labeled_img = label(zeroOne)
+    regions = regionprops(labeled_img)
+
+    for slika in regions:
+        broj = []
+        visina_sr = round(slika.bbox[2] - slika.bbox[0])
+        sirina_sr = round(slika.bbox[3] - slika.bbox[1])
+        if visina_sr < 10 and sirina_sr < 10:
+            zeroOne[slika.bbox[0]:slika.bbox[2],slika.bbox[1]:slika.bbox[3]] = 0
+
+    return zeroOne
+
 
 if __name__ == "__main__":
    # plt.show(block=False)
-    path = "videa\\video-0.avi"
+    path = "videa\\video-1.avi"
     vidcap = cv2.VideoCapture(path)
     success, image = vidcap.read()
     count = 0
@@ -134,9 +158,9 @@ if __name__ == "__main__":
         success, image = vidcap.read()
         if count % 100 == 0:
             processImage(image)
-            print(count)
+
         count += 1
-    print("finished")
+    print("done")
 
 
 __name__ = "test"

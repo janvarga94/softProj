@@ -13,20 +13,12 @@ from skimage.color import rgb2gray
 import os
 import sys
 import math
+from VideoProcessor import *
+from Models import *
 
 model = load_model('trainedModel100-70-30-10')
+videoProcessor = VideoProcessor()
 
-class Pozicija:
-    def __init__(self,row1,col1,row2,col2):
-        self.row1 = row1
-        self.row2 = row2
-        self.col1 = col1
-        self.col2 = col2
-
-class Tacka:
-    def __init__(self, row, col):
-        self.row = row
-        self.col = col
 
 def find_line(img):
     """
@@ -77,43 +69,26 @@ def find_numbers(img):
 
     for broj in brojevi:
         img_crop = erozed[broj[0]: broj[2], broj[1]: broj[3]]
-        t = model.predict(img_crop.reshape(1, 784), verbose=1)
+        t = model.predict(img_crop.reshape(1, 784), verbose=0)
         rez = np.argmax(t)
         if t[0,rez] > 0:
-            print("na slici je: {0}".format(rez))
             rezultat[rez].append(Pozicija(broj[0],broj[1],broj[2],broj[3]))
+            plt.plot([broj[1]],[broj[0]], 'ys')
 
     return rezultat
 
-
-
-
-
-def startDeleteion(img):
-    rows = img.shape[0]
-    cols = img.shape[1]
-
-    matix_size = 5
-
-    for row in range(0, rows - matix_size):
-        for col in range(0, cols - matix_size):
-            croped = img[row: row + matix_size, col: col + matix_size]
-            sum = croped[:,matix_size - 1].sum() + croped[:,matix_size - 1].sum() + croped[matix_size - 1,:].sum() + croped[matix_size - 1,:].sum()
-            if(sum < 0.1):
-                img[row: row + matix_size - 1, col: col + matix_size - 1] = 0
-            pass
-
-
 def processImage(img):
+    linija = find_line(img)
+    numbers = find_numbers(img)
+
+    if not videoProcessor.IsLinijaSet():
+        videoProcessor.SetLiniju(linija)
+    videoProcessor.Process(numbers)
 
     plt.imshow(img,'gray');
     plt.show()
-    line = find_line(img)
 
-    numbers = find_numbers(img)
-    pass
-
-
+#nekoristim
 def erozija(img):
     imageGray = rgb2gray(image)
     newOne = np.zeros((img.shape[0], img.shape[1]))
@@ -156,11 +131,10 @@ if __name__ == "__main__":
     success = True
     while success:
         success, image = vidcap.read()
-        if count % 100 == 0:
+        if count % 40 == 0:
             processImage(image)
 
         count += 1
     print("done")
 
 
-__name__ = "test"

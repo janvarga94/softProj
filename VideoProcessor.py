@@ -8,7 +8,9 @@ class VideoProcessor:
     def __init__(self):
         self.linija = None
         self.sum = 0
-        self.prethodniBoxoviSlike = None
+        self.prethodniBoxoviSlike = []
+        self.maxRastojanjeBrojeva = 120
+
         pass
 
     def SetLiniju(self,linija):
@@ -23,31 +25,40 @@ class VideoProcessor:
     def Process(self, boxoviSlike):
         if self.linija == None:
             raise Exception('Linija nije postavljena')
-        if self.prethodniBoxoviSlike == None:
-            self.prethodniBoxoviSlike = boxoviSlike
+        if len(self.prethodniBoxoviSlike) == 0:
+            self.prethodniBoxoviSlike.append(boxoviSlike)
             return
         for i in range(10):
             boxoviZaJedanBroj = boxoviSlike[i]
             if len(boxoviZaJedanBroj) == 0:
                 continue
 
-            self.putanjeUOdnosuNaPrethodnePozicije(boxoviZaJedanBroj,i)
+            self.proveriPresekZaBroj_i(boxoviZaJedanBroj,i)
 
 
 
+        self.prethodniBoxoviSlike.append(boxoviSlike)
 
-
-        self.prethodniBoxoviSlike = boxoviSlike
-
-    def putanjeUOdnosuNaPrethodnePozicije(self,boxoviZaJedanBroj,i):
+    def proveriPresekZaBroj_i(self,boxoviZaJedanBroj,i):
         for referentniBox in boxoviZaJedanBroj:
-            najblizi, rastojanje = self.__pronadjiNajblizi(referentniBox,self.prethodniBoxoviSlike[i],i)
-            if rastojanje < 100: #znaci to je isti broj samo pomeren u ovom frejmu, sledece proveravamo dal linija sece putanju ovog broja
+
+            najblizi = None
+            rastojanje = 8000
+            lenPrethodnih = len(self.prethodniBoxoviSlike)
+            for ii in range(lenPrethodnih):
+                if rastojanje > self.maxRastojanjeBrojeva and ii < 4: #gledam maximalno 4 koraka unazad
+                    najblizi, rastojanje = self.__pronadjiNajblizi(referentniBox,self.prethodniBoxoviSlike[lenPrethodnih - ii - 1][i],i)
+                else:
+                    break
+
+
+
+            if rastojanje < self.maxRastojanjeBrojeva: #znaci to je isti broj samo pomeren u ovom frejmu, sledece proveravamo dal linija sece putanju ovog broja
                 #debug
                 r,c = self.__srednjaVrednostRedaKolone(referentniBox)
                 r1, c1 = self.__srednjaVrednostRedaKolone(najblizi)
-                plt.plot([c],[r], 'r<')
-                plt.plot([c1], [r1], 'g>')
+                plt.plot([c,c1],[r,r1], 'g')
+             #   plt.plot([c1], [r1], 'g>')
                 plt.plot([self.linija.col1], [self.linija.row1], 'bo')
                 plt.plot([self.linija.col2], [self.linija.row2], 'bo')
                 #end
@@ -56,6 +67,7 @@ class VideoProcessor:
                 daliSeceLiniju = self.__intersect(TackaXY(colNajblizi,rowNajblizi), TackaXY(colReferentni,rowReferentni), TackaXY(self.linija.col1,self.linija.row1), TackaXY(self.linija.col2,self.linija.row2))
                 if daliSeceLiniju:
                     print("sece : {0}".format(i))
+                    self.sum += i
 
     # Return true if line segments AB and CD intersect
     def __intersect(self,A, B, C, D):
@@ -72,7 +84,6 @@ class VideoProcessor:
 
     def __pronadjiNajblizi(self, referentni, brojeviPozicije,ind):
         if len(brojeviPozicije) == 0:
-            print("nema najblizeg za {0}".format(ind))
             return (None, 8000)
         rowReferentnog, colReferentnog = self.__srednjaVrednostRedaKolone(referentni)
 
@@ -80,6 +91,8 @@ class VideoProcessor:
         rastojanjeNajblizeg = 8000 #neka velika vrednost, trazimo sto manju
         for i in range(0,len(brojeviPozicije)):
             rowTrenutnog, colTrenutnog = self.__srednjaVrednostRedaKolone(brojeviPozicije[i])
+            if rowTrenutnog > rowReferentnog or colTrenutnog > colReferentnog: #jer se brojevi krecu desno dole
+                continue
             rastojanje = self.__distance(rowReferentnog,colReferentnog,rowTrenutnog,colTrenutnog)
             if rastojanje < rastojanjeNajblizeg:
                 indexNajblizeg = i

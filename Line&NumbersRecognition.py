@@ -69,7 +69,12 @@ def find_numbers(img):
 
     for broj in brojevi:
         img_crop = erozed[broj[0]: broj[2], broj[1]: broj[3]]
-        t = model.predict(img_crop.reshape(1, 784), verbose=0)
+        reshaped = None
+        try:
+            reshaped = img_crop.reshape(1, 784)
+        except Exception:
+            continue
+        t = model.predict(reshaped, verbose=0)
         rez = np.argmax(t)
         if t[0,rez] > 0:
             rezultat[rez].append(Pozicija(broj[0],broj[1],broj[2],broj[3]))
@@ -131,10 +136,11 @@ if __name__ == "__main__":
     success = True
     while success:
         success, image = vidcap.read()
-        if count % 40 == 0:
+        if count % 30 == 0:
             processImage(image)
 
         count += 1
     print("done")
+    print("suma = {0}".format(videoProcessor.sum))
 
 

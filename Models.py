@@ -1,3 +1,5 @@
+from enum import Enum
+
 class Pozicija:
     def __init__(self,row1,col1,row2,col2):
         self.row1 = row1
@@ -14,3 +16,8 @@ class TackaXY:
     def __init__(self,x,y):
         self.x = x
         self.y = y
+
+
+class BojaLinije(Enum):
+    CRVENA = 1,
+    ZELENA = 2

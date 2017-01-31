@@ -17,14 +17,26 @@ from VideoProcessor import *
 from Models import *
 
 model = load_model('trainedModel100-70-30-10')
-videoProcessor = VideoProcessor()
 
 
-def find_line(img):
+def add(prev,next):
+    return prev + next
+
+def sub(prev, next):
+    return prev - next
+
+videoProcessorRedLine = VideoProcessor(add)
+videoProcessorGreenLine = VideoProcessor(sub)
+
+def find_line(img, bojaLinijeEnum = BojaLinije.CRVENA):
     """
     :return: pozicija linije, tako da prva pozicija je tacka levo, a druga tacka desno
     """
-    img = np.logical_and(img[:, :, 1] < 10, img[:, :,0] >100)
+    if bojaLinijeEnum == BojaLinije.CRVENA:
+        img = np.logical_and(img[:, :, 1] < 10, img[:, :,0] >100)
+    elif bojaLinijeEnum == BojaLinije.ZELENA:
+        img = np.logical_and(img[:, :, 0] < 10, img[:, :, 1] > 100)
+
     tacka1 = None
     tacka2 = None
     for indrow,row in enumerate(img):
@@ -83,15 +95,21 @@ def find_numbers(img):
     return rezultat
 
 def processImage(img):
-    linija = find_line(img)
+    linijaCrvena = find_line(img, BojaLinije.CRVENA)
+    linijaZelena = find_line(img, BojaLinije.ZELENA)
     numbers = find_numbers(img)
 
-    if not videoProcessor.IsLinijaSet():
-        videoProcessor.SetLiniju(linija)
-    videoProcessor.Process(numbers)
+    if not videoProcessorRedLine.IsLinijaSet():
+        videoProcessorRedLine.SetLiniju(linijaCrvena)
 
-    plt.imshow(img,'gray');
-    plt.show()
+    if not videoProcessorGreenLine.IsLinijaSet():
+        videoProcessorGreenLine.SetLiniju(linijaZelena)
+
+    videoProcessorRedLine.Process(numbers)
+    videoProcessorGreenLine.Process(numbers)
+
+   # plt.imshow(img,'gray');
+   # plt.show()
 
 #nekoristim
 def erozija(img):
@@ -129,7 +147,7 @@ def brisanjeZvezdica(img):
 
 if __name__ == "__main__":
    # plt.show(block=False)
-    path = "videa\\video-1.avi"
+    path = "videa\\2linije\\video-3.avi"
     vidcap = cv2.VideoCapture(path)
     success, image = vidcap.read()
     count = 0
@@ -141,6 +159,7 @@ if __name__ == "__main__":
 
         count += 1
     print("done")
-    print("suma = {0}".format(videoProcessor.sum))
+    print("suma kroz crvenu = {0}".format(videoProcessorRedLine.trenutnaVrednostAgregacije))
+    print("-suma kroz zelenu = {0}".format(videoProcessorGreenLine.trenutnaVrednostAgregacije))
 
 

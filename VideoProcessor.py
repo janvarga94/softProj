@@ -5,12 +5,12 @@ import numpy as np
 
 class VideoProcessor:
 
-    def __init__(self):
+    def __init__(self, operacijaZaAgregaciju):
         self.linija = None
-        self.sum = 0
+        self.trenutnaVrednostAgregacije = 0
         self.prethodniBoxoviSlike = []
         self.maxRastojanjeBrojeva = 120
-
+        self.operacijaZaAgregaciju = operacijaZaAgregaciju
         pass
 
     def SetLiniju(self,linija):
@@ -67,7 +67,8 @@ class VideoProcessor:
                 daliSeceLiniju = self.__intersect(TackaXY(colNajblizi,rowNajblizi), TackaXY(colReferentni,rowReferentni), TackaXY(self.linija.col1,self.linija.row1), TackaXY(self.linija.col2,self.linija.row2))
                 if daliSeceLiniju:
                     print("sece : {0}".format(i))
-                    self.sum += i
+                    self.trenutnaVrednostAgregacije = self.operacijaZaAgregaciju(self.trenutnaVrednostAgregacije, i)
+                    #self.sum += i
 
     # Return true if line segments AB and CD intersect
     def __intersect(self,A, B, C, D):

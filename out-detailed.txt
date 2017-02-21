@@ -1,0 +1,11 @@
+Jan Varga ra38/2013
+ video-0.avi: 36 -39 = -3
+ video-1.avi: 70 -75 = -5
+ video-2.avi: 75 -73 = 2
+ video-3.avi: 35 -91 = -56
+ video-4.avi: 48 -75 = -27
+ video-5.avi: 83 -91 = -8
+ video-6.avi: 35 -102 = -67
+ video-7.avi: 90 -60 = 30
+ video-8.avi: 102 -94 = 8
+ video-9.avi: 141 -102 = 39

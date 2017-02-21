@@ -50,7 +50,7 @@ def find_line(img, bojaLinijeEnum = BojaLinije.CRVENA):
     else:
         return Pozicija(tacka2.row, tacka2.col, tacka1.row, tacka1.col)
 
-def find_numbers(img):
+def find_numbers(image):
 
     imageJustNum = np.logical_and(image[:, :, 0] > 0, image[:, :, 2] > 0)
     imageGray = rgb2gray(image)
@@ -108,8 +108,8 @@ def processImage(img):
     videoProcessorRedLine.Process(numbers)
     videoProcessorGreenLine.Process(numbers)
 
-   # plt.imshow(img,'gray');
-   # plt.show()
+    plt.imshow(img,'gray');
+    plt.show()
 
 #nekoristim
 def erozija(img):
@@ -126,7 +126,7 @@ def erozija(img):
     return newOne
 
 def brisanjeZvezdica(img):
-    imageGray = rgb2gray(image)
+    imageGray = rgb2gray(img)
     mask = imageGray[:,:] > 0.5
     zeroOne = np.zeros((img.shape[0], img.shape[1]))
     zeroOne[mask] = 1
@@ -145,9 +145,14 @@ def brisanjeZvezdica(img):
     return zeroOne
 
 
-if __name__ == "__main__":
-   # plt.show(block=False)
-    path = "videa\\2linije\\video-3.avi"
+
+def getResultOfOneVideo(path):
+    global videoProcessorRedLine
+    global videoProcessorGreenLine
+    videoProcessorRedLine = VideoProcessor(add)
+    videoProcessorGreenLine = VideoProcessor(sub)
+
+
     vidcap = cv2.VideoCapture(path)
     success, image = vidcap.read()
     count = 0
@@ -158,8 +163,19 @@ if __name__ == "__main__":
             processImage(image)
 
         count += 1
-    print("done")
-    print("suma kroz crvenu = {0}".format(videoProcessorRedLine.trenutnaVrednostAgregacije))
-    print("-suma kroz zelenu = {0}".format(videoProcessorGreenLine.trenutnaVrednostAgregacije))
 
+    return (videoProcessorRedLine.trenutnaVrednostAgregacije, videoProcessorGreenLine.trenutnaVrednostAgregacije)
+
+def writeResultOfMultipleVideos(path):
+    with open('out.txt', 'w') as f:
+        f.write("RA 38/2013 Jan Varga")
+        f.write("\nfile   sum\n")
+        for i in range(10):
+            (sum,sub) = getResultOfOneVideo(path = "videa\\2linije\\video-{0}.avi".format(i))
+            f.write("\nvideo-{0}.avi\t{3}".format(i,sum,sub,sum+sub))
+
+
+
+if __name__ == "__main__":
+    writeResultOfMultipleVideos("out.txt")
 
